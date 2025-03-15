@@ -1,104 +1,119 @@
-#import de la bibliothèque
 from tkinter import *
+from tkinter import ttk
+#https://www.pythontutorial.net/tkinter/tkinter-color-chooser/
 
+#-Couleurs
+bleu = "#37B0D2"
+orange = "#D07A39"
+noir = "#28262C"
+fond = "#F6FDFD"
+jaune = "#E9D37B"
 
+#--Creation de la fenetre
 
-# --------------------- Création de la fenêtre graphique --------------------- #
 ma_fenetre=Tk()
-ma_fenetre.title("Constructions œuvres géométriques")
+ma_fenetre.title("Construction oeuvre géométriques")
 ma_fenetre.geometry('1000x600')
-ma_fenetre['bg']='black'
+ma_fenetre['bg']=fond
 
-main_color = 'black'
-second_color = 'blue'
+#--Creation des objets
 
-# ---------------------------- Création des objets --------------------------- #
+zone_dessin = Canvas(ma_fenetre) #notre zone pour dessiner des figures
 
-ZoneDessin=Canvas(ma_fenetre,width=800,height=600,bg=main_color, borderwidth=0, highlightthickness=0)
-ZoneParam=Canvas(ma_fenetre,width=200,height=600,bg=main_color, borderwidth=0, highlightthickness=0)
+zone_param = Frame(ma_fenetre, background=bleu)
+zone_figures = Frame(ma_fenetre, background=orange)
+#------------------------Variables necessaires-----------------------------
+param = ""
+border_width = 0
+colors = ["red", # couleurs qui sont proposes par defaut pour chaque peintre
+          "green",
+          "grey",
+          "yellow"]
+#------------------------Toutes les parametres-----------------------------
+parameters_group = Frame(zone_param) #sert a regroupper tous les objets pour les afficher au centre
 
-titre1 = Label(ZoneParam, text="Choix de la forme", bg=main_color, fg=second_color)
-forme = IntVar() #La figure sera un carre si forme = 0, sinon elle est un cercle
-carre_btn = Radiobutton(ZoneParam, text="Carre", value=0, variable=forme, bg=main_color, fg=second_color)
-cercle_btn = Radiobutton(ZoneParam, text="Cercle", value=1, variable=forme, bg=main_color, fg=second_color)
+height_label = ttk.Label(parameters_group, text="height")
+height_saisie = ttk.Entry(parameters_group)
 
-titre2 = Label(ZoneParam, text="Choix taille en pixel", bg=main_color, fg=second_color)
-size = IntVar() #La taille d'une figure(0 -> 100)
-scale = Scale(ZoneParam, orient=HORIZONTAL, from_=0, to=100, variable=size, bg=main_color, fg=second_color)
+width_label = ttk.Label(parameters_group, text="width")
+width_saisie = ttk.Entry(parameters_group)
 
-titre3 = Label(ZoneParam, text="Abscisse du centre", bg=main_color, fg=second_color)
-abs_centre = Entry(ZoneParam)
+param_label = ttk.Label(parameters_group, text="parameter")
+param_saisie = ttk.Combobox(parameters_group, textvariable=param)
 
-titre4 = Label(ZoneParam, text="Ordonnée du centre", bg=main_color, fg=second_color)
-ord_centre = Entry(ZoneParam)
+border_width_label = ttk.Label(parameters_group, text="border")
+border_width_scr = Scale(parameters_group, orient=HORIZONTAL, from_=0, to=100, variable=border_width)
 
-titre5 = Label(ZoneParam, text="Choix de la couleur" , bg=main_color, fg=second_color)
-couleurs = ["blue", "red", "green", "yellow"]
-liste_couleur = Listbox(ZoneParam, selectmode = SINGLE, height=4, bg=main_color, fg=second_color)
+color_label = ttk.Label(parameters_group, text = "color")
+color_list = ttk.Combobox(parameters_group, values=colors)
 
-#Init de listbox avec une liste des couleurs
-for i in range(len(couleurs)):
-    liste_couleur.insert(i, couleurs[i])
+delete_btn = ttk.Button(parameters_group, text = "erase")
+#------------------------Les Canvas pour mettre les images des figures-----------------------------
+figure1 = Canvas(zone_figures, background="red")
+figure2 = Canvas(zone_figures, background="green")
+figure3 = Canvas(zone_figures, background="yellow")
+figure4 = Canvas(zone_figures, background="grey")
+#------------------------Bouttons hors canvas specials-----------------------------
+help_btn = ttk.Button(ma_fenetre, text = "help")
+retour_btn = ttk.Button(ma_fenetre, text = "return")
+
+#------------------------Placement des objets-----------------------------
+zone_dessin.place(relx=0, rely=0, relheight=0.8, relwidth=1)
+
+zone_param.place(relx=0.4, rely=0.8, relheight=0.2, relwidth=0.6)
+zone_figures.place(relx=0, rely=0.8, relheight=0.2, relwidth=0.4)
+
+figure1.place(relwidth=0.25, relheight=1, relx=0)
+figure2.place(relwidth=0.25, relheight=1, relx=0.25)
+figure3.place(relwidth=0.25, relheight=1, relx=0.5)
+figure4.place(relwidth=0.25, relheight=1, relx=0.75)
+
+parameters_group.pack(anchor=CENTER)
+
+height_label.grid(row= 1, column=1)
+height_saisie.grid(row=2, column=1)
+width_label.grid(row=3, column=1)
+width_saisie.grid(row=4, column=1)
+
+param_label.grid(row=1, column=2)
+param_saisie.grid(row=2, column=2)
+border_width_label.grid(row=4, column=2)
+border_width_scr.grid(row=3, column=2)
+color_label.grid(row=1, column=3)
+color_list.grid(row=2, column=3)
+delete_btn.grid(row=3, column=3)
+
+help_btn.pack(side="bottom", anchor="e")
+retour_btn.pack(side="top", anchor="w")
+
+#------------------------Partie logique-----------------------------
+"""Fonction pour repartir les taches entre les methodes des figures"""
+def dessiner(event):
+    height = int(height_saisie.get())
+    width = int(width_saisie.get())
+    color = color_list.get()
+    #print(event.x, " ", event.y) - test des coordonnees
+    return rectangle_des(event.x, event.y, height, width, border_width, color)
 
 """
-    La fonction qui cree une figure entre les deux suivantes:
-    - carre
-    - cercle
-    Etapes:
-        1) initialization des variables a utiliser
-            a - longeur/largeur d'une figure
-            x0 - abs d'origine
-            y0 - ord d'origine
-            x1=x0+a - deuxieme abscisse
-            y1=y0+a - deuxieme ordonnee
-            couleur - coloration choisie
+Une fonction pour dessiner un rectangle
+cursor_x - position d'abscisse du curseur
+cursor_y - position d'ordonnee du curseur
+h - hauter de la figure
+w - largeur de la figure
+border - l'entourage de figure en px
+color - couleur de la figure
+param - parametre specifique de la figure
+"""
+def rectangle_des(cursor_x:int, cursor_y:int, h:int, w:int, border:int, col:str):
+    x0 = cursor_x - w/2 #x de depart decale du centre au curseur
+    y0 = cursor_y - h/2 #y de depart
 
-        2) Si on a choisit carre:
-            a. methode .create_rectangle
-        Si non:
-            b. methode .create_oval 
-    """
-def createFigure():
-    #1)
-    a = size.get() * 5 #Max size peut etre 500px
-    x0 = float(abs_centre.get()) #convertation de str -> float
-    y0 = float(ord_centre.get())
-    #Les coordonnees de 2 point(origine + cote)
-    x1 = x0 + a
-    y1 = y0 + a
-    couleur = liste_couleur.get(ACTIVE) #Couleur d'une figure placée
-    #2)
-    if forme.get() == 0:
-        ZoneDessin.create_rectangle(x0, y0, x1, y1, fill=couleur)
-    else:
-        ZoneDessin.create_oval(x0, y0, x1, y1, fill=couleur)
+    x = cursor_x + w/2 #x de la fin
+    y = cursor_y + h/2 #y de la fin
 
-dessin_btn = Button(ZoneParam, text="Dessiner", command=createFigure, bg=main_color, fg=second_color)
-quit_btn = Button(ZoneParam, text="Quitter", bg=main_color, fg=second_color)
+    zone_dessin.create_rectangle(x0, y0, x, y, fill=col)
 
-# ------------------------- Positionnement des objets ------------------------ #
-ZoneDessin.place(x=0,y=0)
-ZoneParam.place(x=800, y=0)
-
-titre1.pack()
-carre_btn.pack()
-cercle_btn.pack()
-
-titre2.pack()
-scale.pack()
-
-titre3.pack()
-abs_centre.pack()
-
-titre4.pack()
-ord_centre.pack()
-
-titre5.pack()
-liste_couleur.pack()
-
-dessin_btn.pack()
-quit_btn.pack()
-
-
-# -------------------------- Lancement d'application ------------------------- #
+#--Lancement de l'application
+zone_dessin.bind("<Button-1>", dessiner)
 ma_fenetre.mainloop()
